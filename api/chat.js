@@ -153,7 +153,7 @@ const geminiRes = await fetch(
 );
 
 clearTimeout(timeout);
-    );
+
 
     let data;
 try {
