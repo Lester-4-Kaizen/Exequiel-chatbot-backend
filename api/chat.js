@@ -1,6 +1,7 @@
 // =============================================================
 // ERLHS AI Assistant — Vercel Serverless Backend
 // File: api/chat.js  (place inside /api folder in Vercel repo)
+// API: Anthropic Claude (claude-haiku-4-5-20251001)
 // =============================================================
 
 module.exports = async function handler(req, res) {
@@ -11,9 +12,15 @@ module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const { message } = req.body;
-  if (!message) return res.status(400).json({ error: "No message provided" });
+  if (!message || typeof message !== "string" || message.trim() === "") {
+    return res.status(400).json({ error: "No valid message provided" });
+  }
 
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+  const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+  if (!ANTHROPIC_API_KEY) {
+    console.error("ANTHROPIC_API_KEY is not set");
+    return res.status(500).json({ error: "Server configuration error. Please contact ERLHS at (0917) 506-2282." });
+  }
 
   const systemInstruction = `
 You are the official AI Assistant of Exequiel R. Lina High School (ERLHS), a public national high school under the Department of Education (DepEd), Region III – Central Luzon, Schools Division of Nueva Ecija.
@@ -127,37 +134,58 @@ If the chatbot cannot answer a specific question (e.g., current class schedules,
 `;
 
   try {
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: systemInstruction }] },
-          contents: [{ role: "user", parts: [{ text: message }] }],
-          generationConfig: {
-            temperature: 0.4,
-            maxOutputTokens: 700
-          }
-        })
-      }
-    );
+    const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 700,
+        system: systemInstruction,
+        messages: [
+          { role: "user", content: message.trim() }
+        ]
+      })
+    });
 
-    const data = await geminiRes.json();
+    const data = await anthropicRes.json();
 
-    if (!geminiRes.ok) {
-      console.error("Gemini API error:", data);
-      return res.status(500).json({ error: "Gemini API error", details: data });
+    // Handle Anthropic-specific error shapes
+    if (!anthropicRes.ok) {
+      const errType = data?.error?.type || "unknown_error";
+      const errMsg  = data?.error?.message || "Unknown Anthropic API error";
+      console.error("Anthropic API error:", errType, errMsg);
+
+      // Friendly messages for common error types
+      const friendlyMap = {
+        authentication_error:  "API key is invalid or missing. Please check server configuration.",
+        permission_error:      "API key does not have permission to use this model.",
+        rate_limit_error:      "The assistant is busy right now. Please try again in a moment.",
+        overloaded_error:      "The assistant is currently overloaded. Please try again shortly.",
+        invalid_request_error: "Invalid request sent to the AI service.",
+      };
+
+      return res.status(anthropicRes.status).json({
+        error: friendlyMap[errType] || "AI service error. Please try again or contact ERLHS at (0917) 506-2282.",
+        _debug: { errType, errMsg }  // strip this in production if desired
+      });
     }
 
+    // Validate response shape
     const reply =
-      data.candidates?.[0]?.content?.parts?.[0]?.text ||
+      data?.content?.[0]?.text?.trim() ||
       "I'm sorry, I couldn't generate a response. Please try again or contact ERLHS directly at (0917) 506-2282.";
 
     return res.status(200).json({ reply });
 
   } catch (err) {
+    // Network-level or unexpected JS errors
     console.error("Server error:", err);
-    return res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({
+      error: "Internal server error. Please try again or contact ERLHS at (0917) 506-2282."
+    });
   }
-}
+};
