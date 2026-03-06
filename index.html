@@ -1,0 +1,1480 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>ERLHS AI Assistant</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Lora:ital,wght@0,500;0,600;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0b1e0c;
+        --card: #142416;
+        --g1: #1a5220;
+        --g2: #246228;
+        --g3: #337a38;
+        --g4: #52b85a;
+        --gold2: #d4a843;
+        --gold3: #f0c53e;
+        --white: #ffffff;
+        --off: rgba(255, 255, 255, 0.88);
+        --mid: rgba(255, 255, 255, 0.58);
+        --dim: rgba(255, 255, 255, 0.32);
+        --dimmer: rgba(255, 255, 255, 0.18);
+        --border: rgba(255, 255, 255, 0.09);
+        --bot-bg: rgba(255, 255, 255, 0.07);
+        --bot-bdr: rgba(255, 255, 255, 0.13);
+        --usr-bg: #1e5424;
+        --f: "Plus Jakarta Sans", sans-serif;
+        --fd: "Lora", serif;
+      }
+
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      body {
+        font-family: var(--f);
+        background: var(--bg);
+        color: var(--off);
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* ════════════════════════════════
+       FULL-PAGE BACKGROUND
+    ════════════════════════════════ */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(
+            ellipse 140% 80% at -15% -10%,
+            rgba(26, 82, 32, 0.6) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            ellipse 80% 60% at 115% 110%,
+            rgba(180, 130, 10, 0.13) 0%,
+            transparent 48%
+          ),
+          radial-gradient(
+            ellipse 60% 50% at 80% 15%,
+            rgba(36, 98, 40, 0.22) 0%,
+            transparent 40%
+          ),
+          radial-gradient(
+            ellipse 90% 90% at 50% 50%,
+            rgba(8, 16, 9, 0.88) 0%,
+            transparent 72%
+          );
+        animation: bgpulse 22s ease-in-out infinite alternate;
+      }
+      @keyframes bgpulse {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.82;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        opacity: 0.045;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260' viewBox='0 0 260 260'%3E%3Cg fill='none' stroke='%2352b85a' stroke-width='1'%3E%3Cpath d='M30 130 Q65 55 100 130 Q65 205 30 130Z'/%3E%3Cpath d='M30 130 Q65 130 100 130'/%3E%3Cpath d='M44 104 Q65 98 86 104'/%3E%3Cpath d='M38 118 Q65 111 92 118'/%3E%3Cpath d='M38 142 Q65 149 92 142'/%3E%3Cpath d='M44 156 Q65 162 86 156'/%3E%3Cpath d='M170 30 Q225 62 170 94 Q115 62 170 30Z'/%3E%3Cpath d='M170 30 Q170 62 170 94'/%3E%3Cpath d='M144 44 Q148 62 144 80'/%3E%3Cpath d='M158 38 Q162 62 158 86'/%3E%3Cpath d='M182 38 Q178 62 182 86'/%3E%3Cpath d='M196 44 Q192 62 196 80'/%3E%3Ccircle cx='228' cy='228' r='2.5' fill='%2352b85a'/%3E%3Ccircle cx='212' cy='242' r='1.5' fill='%2352b85a'/%3E%3Ccircle cx='14' cy='245' r='2' fill='%2352b85a'/%3E%3Ccircle cx='245' cy='14' r='2' fill='%2352b85a'/%3E%3Ccircle cx='130' cy='250' r='1.5' fill='%2352b85a'/%3E%3C/g%3E%3C/svg%3E");
+        background-size: 260px 260px;
+      }
+
+      /* ════════════════════════════════
+       LAYOUT WRAPPER
+    ════════════════════════════════ */
+      .page {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* ════════════════════════════════
+       TOP NAV — full width like PHCM
+    ════════════════════════════════ */
+      .nav {
+        flex-shrink: 0;
+        width: 100%;
+        padding: 0 0 14px;
+        padding-top: max(16px, env(safe-area-inset-top, 16px));
+        background: linear-gradient(
+          180deg,
+          rgba(14, 34, 16, 0.98) 0%,
+          rgba(14, 34, 16, 0.8) 70%,
+          transparent 100%
+        );
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        position: relative;
+      }
+      .nav-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 48px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .nav::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          rgba(82, 184, 90, 0.6) 20%,
+          rgba(240, 197, 62, 1) 50%,
+          rgba(82, 184, 90, 0.6) 80%,
+          transparent 100%
+        );
+        animation: shimmer 4s ease-in-out infinite;
+      }
+      @keyframes shimmer {
+        0%,
+        100% {
+          opacity: 0.6;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      .logo-wrap {
+        position: relative;
+        flex-shrink: 0;
+      }
+      .logo-ring {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .logo-ring::before {
+        content: "";
+        position: absolute;
+        inset: -2px;
+        border-radius: 50%;
+        background: conic-gradient(
+          var(--gold3) 0deg,
+          var(--g4) 90deg,
+          var(--gold3) 180deg,
+          var(--g3) 270deg,
+          var(--gold3) 360deg
+        );
+        animation: spin 8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .logo-face {
+        position: relative;
+        z-index: 1;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: var(--card);
+        border: 2px solid var(--bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        font-family: var(--fd);
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--gold3);
+      }
+      .logo-face img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+      }
+      .logo-dot {
+        position: absolute;
+        bottom: 1px;
+        right: 1px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #4edc60;
+        border: 2.5px solid var(--bg);
+        animation: glow 2.5s ease infinite;
+      }
+      @keyframes glow {
+        0%,
+        100% {
+          box-shadow: 0 0 6px rgba(78, 220, 96, 0.5);
+        }
+        50% {
+          box-shadow: 0 0 16px rgba(78, 220, 96, 0.9);
+        }
+      }
+
+      .nav-text {
+        flex: 1;
+        min-width: 0;
+      }
+      .nav-title {
+        font-family: var(--fd);
+        font-size: clamp(0.96rem, 2.5vw, 1.15rem);
+        font-weight: 600;
+        color: var(--gold3);
+        letter-spacing: 0.02em;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .nav-sub {
+        font-size: clamp(0.6rem, 1.5vw, 0.67rem);
+        color: var(--dim);
+        margin-top: 3px;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .nav-online {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        background: rgba(78, 220, 96, 0.1);
+        border: 1px solid rgba(78, 220, 96, 0.25);
+      }
+      .nav-online-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #4edc60;
+        box-shadow: 0 0 8px rgba(78, 220, 96, 0.8);
+        animation: glow 2.5s ease infinite;
+      }
+      .nav-online span {
+        font-size: 0.68rem;
+        font-weight: 600;
+        color: #4edc60;
+        letter-spacing: 0.06em;
+      }
+      @media (max-width: 400px) {
+        .nav-online span {
+          display: none;
+        }
+      }
+
+      /* ════════════════════════════════
+       STATUS BANNER
+    ════════════════════════════════ */
+      .status-banner {
+        flex-shrink: 0;
+        display: none;
+        padding: 7px 32px;
+        font-size: 0.72rem;
+        font-weight: 500;
+        align-items: center;
+        gap: 8px;
+      }
+      .status-banner.show {
+        display: flex;
+      }
+      .status-banner.offline {
+        background: rgba(220, 80, 80, 0.12);
+        color: #f08080;
+        border-bottom: 1px solid rgba(220, 80, 80, 0.2);
+      }
+      .status-banner.reconnecting {
+        background: rgba(240, 197, 62, 0.1);
+        color: var(--gold2);
+        border-bottom: 1px solid rgba(240, 197, 62, 0.18);
+      }
+
+      /* ════════════════════════════════
+       MAIN SCROLL AREA
+    ════════════════════════════════ */
+      .main {
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.07) transparent;
+      }
+      .main::-webkit-scrollbar {
+        width: 4px;
+      }
+      .main::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.09);
+        border-radius: 4px;
+      }
+
+      /* ════════════════════════════════
+       WELCOME SECTION (full-width, PHCM-style)
+    ════════════════════════════════ */
+      .welcome-section {
+        padding: 20px 32px 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 8px;
+      }
+      .welcome-logo {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: var(--card);
+        border: 2.5px solid rgba(82, 184, 90, 0.4);
+        box-shadow:
+          0 0 0 8px rgba(82, 184, 90, 0.08),
+          0 8px 32px rgba(0, 0, 0, 0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .welcome-logo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+      }
+      .welcome-section h1 {
+        font-family: var(--fd);
+        font-size: clamp(1.35rem, 4.5vw, 1.75rem);
+        font-weight: 600;
+        color: var(--white);
+        letter-spacing: 0.01em;
+        line-height: 1.2;
+      }
+      .welcome-section p {
+        font-size: clamp(0.82rem, 2.2vw, 0.92rem);
+        color: var(--mid);
+        line-height: 1.68;
+        max-width: 500px;
+      }
+      .welcome-motto {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.65rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--gold2);
+        border: 1px solid rgba(212, 168, 67, 0.3);
+        background: rgba(212, 168, 67, 0.07);
+        padding: 6px 18px;
+        border-radius: 24px;
+      }
+
+      /* ════════════════════════════════
+       CATEGORY GRID — 3 cols like PHCM
+    ════════════════════════════════ */
+      .cat-section {
+        padding: 4px 28px 16px;
+      }
+      .cat-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        max-width: 780px;
+        margin: 0 auto;
+        justify-content: center;
+        max-width: 600px;
+      }
+      @media (max-width: 520px) {
+        .cat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 340px) {
+        .cat-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .cat-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 16px;
+        padding: 8px 8px 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        text-align: center;
+        transition:
+          background 0.18s,
+          border-color 0.18s,
+          transform 0.16s,
+          box-shadow 0.18s;
+      }
+      .cat-card:hover {
+        background: rgba(36, 98, 40, 0.25);
+        border-color: rgba(82, 184, 90, 0.4);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3);
+      }
+      .cat-card:active {
+        transform: translateY(0);
+      }
+      .cat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: rgba(82, 184, 90, 0.12);
+        border: 1px solid rgba(82, 184, 90, 0.22);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        color: var(--g4);
+      }
+      .cat-icon svg {
+        width: 20px;
+        height: 20px;
+      }
+      .cat-title {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: var(--white);
+        line-height: 1.2;
+      }
+      .cat-sub {
+        font-size: 0.66rem;
+        color: var(--dim);
+        line-height: 1.3;
+      }
+
+      /* ════════════════════════════════
+       CHAT AREA — PHCM-accurate layout
+    ════════════════════════════════ */
+      .chat-section {
+        display: none;
+        flex-direction: column;
+        padding: 32px 0 24px;
+      }
+      .chat-section.active {
+        display: flex;
+      }
+
+      /* All chat content constrained + centered, matching PHCM column */
+      .chat-inner {
+        width: 100%;
+        max-width: 780px;
+        margin: 0 auto;
+        padding: 0 48px;
+      }
+
+      .divider {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        opacity: 0.2;
+        margin-bottom: 24px;
+      }
+      .divider::before,
+      .divider::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.3);
+      }
+      .divider span {
+        font-size: 0.57rem;
+        color: var(--mid);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      /* ── ROW: bot left, user right ── */
+      .msg-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 22px;
+        opacity: 0;
+        animation: msgpop 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      }
+      /* user row: push everything to the right */
+      .msg-row.user {
+        flex-direction: row-reverse;
+      }
+      @keyframes msgpop {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* ── AVATARS ── */
+      .msg-av {
+        flex-shrink: 0;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 2px;
+      }
+      /* Bot: school logo circle */
+      .msg-row.bot .msg-av {
+        background: linear-gradient(135deg, var(--g1), var(--g3));
+        border: 2px solid rgba(82, 184, 90, 0.35);
+        box-shadow: 0 2px 8px rgba(26, 82, 32, 0.4);
+      }
+      .msg-row.bot .msg-av img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      /* User: dark circle with "You" label like PHCM */
+      .msg-row.user .msg-av {
+        background: #1c3d20;
+        border: 2px solid rgba(82, 184, 90, 0.35);
+        font-size: 0.56rem;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.85);
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+      }
+
+      /* ── MESSAGE BODY ── */
+      .msg-body {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        min-width: 0;
+      }
+      /* Bot body fills most of remaining width */
+      .msg-row.bot .msg-body {
+        flex: 1;
+        max-width: 75%;
+      }
+      /* User body is auto-sized, right-aligned */
+      .msg-row.user .msg-body {
+        align-items: flex-end;
+        max-width: 75%;
+      }
+
+      /* ── BUBBLES ── */
+      .bubble {
+        font-size: 0.84rem;
+        line-height: 1.7;
+        word-break: break-word;
+        padding: 12px 16px;
+      }
+      /* Bot bubble: white-ish card like PHCM light, here glassmorphic */
+      .msg-row.bot .bubble {
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.11);
+        border-radius: 4px 16px 16px 16px;
+        color: var(--off);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+      }
+      /* User bubble: solid brand green, rounded opposite corner */
+      .msg-row.user .bubble {
+        background: var(--g2);
+        border: none;
+        border-radius: 16px 4px 16px 16px;
+        color: #fff;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.28);
+      }
+      .msg-row.bot .bubble strong {
+        color: var(--gold3);
+        font-weight: 600;
+      }
+      .bubble.is-error {
+        border-color: rgba(220, 80, 80, 0.3) !important;
+        background: rgba(220, 80, 80, 0.08) !important;
+      }
+      .err-text {
+        color: #f08080;
+        font-size: 0.82rem;
+      }
+      .retry-btn {
+        margin-top: 7px;
+        display: inline-block;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--gold3);
+        background: rgba(240, 197, 62, 0.1);
+        border: 1px solid rgba(240, 197, 62, 0.25);
+        padding: 4px 12px;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .retry-btn:hover {
+        background: rgba(240, 197, 62, 0.2);
+      }
+
+      /* ── TIMESTAMP below bubble ── */
+      .msg-ts {
+        font-size: 0.56rem;
+        color: var(--dimmer);
+        letter-spacing: 0.04em;
+        padding: 0 2px;
+      }
+      .msg-row.user .msg-ts {
+        text-align: right;
+      }
+
+      .typing-dots {
+        display: flex;
+        gap: 5px;
+        align-items: center;
+        padding: 3px 0;
+      }
+      .typing-dots span {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--g4);
+        opacity: 0.4;
+        animation: tdot 1.3s ease infinite;
+      }
+      .typing-dots span:nth-child(2) {
+        animation-delay: 0.16s;
+      }
+      .typing-dots span:nth-child(3) {
+        animation-delay: 0.32s;
+      }
+      @keyframes tdot {
+        0%,
+        80%,
+        100% {
+          transform: scale(1) translateY(0);
+          opacity: 0.35;
+        }
+        40% {
+          transform: scale(1.25) translateY(-4px);
+          opacity: 0.95;
+        }
+      }
+
+      /* ════════════════════════════════
+       MOBILE SIZING
+    ════════════════════════════════ */
+      @media (max-width: 600px) {
+        .nav {
+          padding: 0 0 10px;
+          padding-top: max(12px, env(safe-area-inset-top, 20px));
+        }
+        .nav-inner {
+          padding: 0 14px;
+          gap: 10px;
+        }
+        .logo-ring {
+          width: 38px;
+          height: 38px;
+        }
+        .logo-face {
+          width: 34px;
+          height: 34px;
+          font-size: 11px;
+        }
+        .logo-dot {
+          width: 9px;
+          height: 9px;
+        }
+        .nav-title {
+          font-size: 0.9rem;
+        }
+        .nav-sub {
+          font-size: 0.58rem;
+        }
+        .nav-online {
+          padding: 4px 10px;
+          gap: 5px;
+        }
+        .nav-online span {
+          font-size: 0.6rem;
+        }
+
+        .welcome-section {
+          padding: 25px 16px 25px;
+          gap: 6px;
+        }
+        .welcome-logo {
+          width: 54px;
+          height: 54px;
+        }
+        .welcome-section h1 {
+          font-size: 1.5rem;
+        }
+        .welcome-section p {
+          font-size: 0.76rem;
+        }
+        .welcome-motto {
+          font-size: 0.57rem;
+          padding: 4px 11px;
+        }
+
+        .cat-section {
+          padding: 0 12px 18px;
+        }
+        .cat-grid {
+          gap: 8px;
+        }
+        .cat-card {
+          padding: 11px 8px 10px;
+          border-radius: 11px;
+          gap: 6px;
+        }
+        .cat-icon {
+          width: 30px;
+          height: 30px;
+          border-radius: 8px;
+        }
+        .cat-icon svg {
+          width: 14px;
+          height: 14px;
+        }
+        .cat-title {
+          font-size: 0.7rem;
+        }
+        .cat-sub {
+          font-size: 0.58rem;
+        }
+
+        .chat-inner {
+          padding: 0 14px;
+        }
+        .msg-av {
+          width: 30px;
+          height: 30px;
+        }
+        .bubble {
+          font-size: 0.8rem;
+          padding: 10px 13px;
+        }
+        .msg-row {
+          gap: 8px;
+          margin-bottom: 16px;
+        }
+
+        .input-zone {
+          padding: 9px 0;
+          padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
+        }
+        .composer-wrap {
+          padding: 0 14px;
+          gap: 7px;
+        }
+        .composer {
+          min-height: 44px;
+          padding: 0 8px 0 14px;
+        }
+        #userinput {
+          font-size: 0.82rem;
+          padding: 10px 0;
+        }
+        .send-btn {
+          width: 34px;
+          height: 34px;
+        }
+        .input-disclaimer {
+          font-size: 0.58rem;
+        }
+      }
+
+      /* FAB */
+      .fab-scroll {
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: rgba(14, 34, 16, 0.96);
+        border: 1px solid rgba(82, 184, 90, 0.3);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 50;
+      }
+      .fab-scroll.visible {
+        display: flex;
+      }
+      .fab-scroll svg {
+        width: 14px;
+        height: 14px;
+        fill: var(--g4);
+      }
+
+      /* ════════════════════════════════
+       BOTTOM INPUT — full width like PHCM
+    ════════════════════════════════ */
+      .input-zone {
+        flex-shrink: 0;
+        width: 100%;
+        padding: 14px 0;
+        padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
+        background: rgba(8, 18, 9, 0.92);
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .composer-wrap {
+        max-width: 810px;
+        margin: 0 auto;
+        padding: 0 48px;
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+      }
+      .composer {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1.5px solid rgba(255, 255, 255, 0.12);
+        border-radius: 50px;
+        padding: 0 10px 0 22px;
+        min-height: 50px;
+        transition:
+          border-color 0.22s,
+          box-shadow 0.22s;
+      }
+      .composer:focus-within {
+        border-color: rgba(82, 184, 90, 0.55);
+        box-shadow:
+          0 0 0 3px rgba(36, 98, 40, 0.18),
+          0 4px 20px rgba(0, 0, 0, 0.2);
+      }
+      #userinput {
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: var(--white);
+        font-family: var(--f);
+        font-size: clamp(0.84rem, 2vw, 0.92rem);
+        resize: none;
+        max-height: 100px;
+        line-height: 1.55;
+        caret-color: var(--g4);
+        padding: 13px 0;
+        display: block;
+      }
+      #userinput::placeholder {
+        color: rgba(255, 255, 255, 0.35);
+      }
+      .send-btn {
+        flex-shrink: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(140deg, var(--g2), var(--g3));
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+        transition:
+          transform 0.15s,
+          box-shadow 0.15s,
+          opacity 0.15s;
+        box-shadow: 0 3px 16px rgba(36, 98, 40, 0.55);
+      }
+      .send-btn::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: linear-gradient(
+          135deg,
+          rgba(255, 255, 255, 0.22),
+          transparent
+        );
+      }
+      .send-btn:hover:not(:disabled) {
+        transform: scale(1.08);
+        box-shadow: 0 5px 22px rgba(36, 98, 40, 0.7);
+      }
+      .send-btn:active:not(:disabled) {
+        transform: scale(0.92);
+      }
+      .send-btn:disabled {
+        opacity: 0.25;
+        cursor: not-allowed;
+        transform: none !important;
+      }
+      .send-btn svg {
+        width: 16px;
+        height: 16px;
+        fill: var(--gold3);
+        position: relative;
+        z-index: 1;
+      }
+      .input-disclaimer {
+        text-align: center;
+        font-size: 0.6rem;
+        color: rgba(255, 255, 255, 0.38);
+        letter-spacing: 0.03em;
+        line-height: 1.4;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page" id="app">
+      <!-- ══ TOP NAV ══ -->
+      <header class="nav">
+        <div class="nav-inner">
+          <div class="logo-wrap">
+            <div class="logo-ring">
+              <div class="logo-face">
+                <img
+                  src="logo.png"
+                  alt="ERLHS"
+                  onerror="
+                    this.style.display = 'none';
+                    this.parentElement.textContent = 'ER';
+                  "
+                />
+              </div>
+            </div>
+            <div class="logo-dot"></div>
+          </div>
+          <div class="nav-text">
+            <div class="nav-title">Exequiel R. Lina High School</div>
+            <div class="nav-sub">
+              AI Campus Assistant &middot; Licab, Nueva Ecija
+            </div>
+          </div>
+          <div class="nav-online">
+            <div class="nav-online-dot"></div>
+            <span>Online</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- ══ STATUS BANNER ══ -->
+      <div class="status-banner" id="statusBanner">
+        <span id="statusText"></span>
+      </div>
+
+      <!-- ══ MAIN SCROLL AREA ══ -->
+      <div class="main" id="mainScroll">
+        <!-- Welcome -->
+        <div class="welcome-section" id="welcomeSection">
+          <div class="welcome-logo">
+            <img
+              src="logo.png"
+              alt="ERLHS"
+              onerror="
+                this.style.display = 'none';
+                this.parentElement.textContent = '&#127807;';
+              "
+            />
+          </div>
+          <h1>Your ERLHS AI Campus Assistant</h1>
+          <p>
+            Hello! I&#39;m here to help you navigate everything about Exequiel
+            R. Lina High School — from enrollment and strands to schedules,
+            contacts, and school life. Just ask away.
+          </p>
+          <span class="welcome-motto"
+            >&#9670; Green &amp; Gold &middot; Est. 1966 &#9670;</span
+          >
+        </div>
+
+        <!-- Category grid -->
+        <div class="cat-section" id="catSection">
+          <div class="cat-grid">
+            <div class="cat-card" onclick="catSend('programs')">
+              <div class="cat-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect x="3" y="3" width="7" height="7" rx="1" />
+                  <rect x="14" y="3" width="7" height="7" rx="1" />
+                  <rect x="3" y="14" width="7" height="7" rx="1" />
+                  <rect x="14" y="14" width="7" height="7" rx="1" />
+                </svg>
+              </div>
+              <div class="cat-title">Programs Offered</div>
+              <div class="cat-sub">SHS strands &amp; tracks</div>
+            </div>
+            <div class="cat-card" onclick="catSend('enrollment')">
+              <div class="cat-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <line x1="19" y1="8" x2="19" y2="14" />
+                  <line x1="22" y1="11" x2="16" y2="11" />
+                </svg>
+              </div>
+              <div class="cat-title">Enrollment</div>
+              <div class="cat-sub">Requirements &amp; steps</div>
+            </div>
+            <div class="cat-card" onclick="catSend('tuition')">
+              <div class="cat-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8" />
+                  <line x1="12" y1="6" x2="12" y2="8" />
+                  <line x1="12" y1="16" x2="12" y2="18" />
+                </svg>
+              </div>
+              <div class="cat-title">Tuition &amp; Fees</div>
+              <div class="cat-sub">Costs &amp; scholarships</div>
+            </div>
+            <div class="cat-card" onclick="catSend('location')">
+              <div class="cat-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+              </div>
+              <div class="cat-title">Location</div>
+              <div class="cat-sub">Address &amp; directions</div>
+            </div>
+            <div class="cat-card" onclick="catSend('contact')">
+              <div class="cat-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.81a16 16 0 0 0 6.29 6.29l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"
+                  />
+                </svg>
+              </div>
+              <div class="cat-title">Contact Us</div>
+              <div class="cat-sub">Phone, email &amp; more</div>
+            </div>
+            <div class="cat-card" onclick="catSend('schedule')">
+              <div class="cat-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+              </div>
+              <div class="cat-title">School Hours</div>
+              <div class="cat-sub">Class &amp; office schedule</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat messages (shown after first send) -->
+        <div class="chat-section" id="chatSection">
+          <div class="chat-inner">
+            <div class="divider"><span>Today</span></div>
+          </div>
+        </div>
+      </div>
+      <!-- /.main -->
+
+      <!-- FAB -->
+      <div class="fab-scroll" id="scrollFab" onclick="scrollToBottom()">
+        <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z" /></svg>
+      </div>
+
+      <!-- ══ INPUT ZONE ══ -->
+      <div class="input-zone">
+        <div class="composer-wrap">
+          <div class="composer">
+            <textarea
+              id="userinput"
+              rows="1"
+              placeholder="Ask anything about ERLHS&#8230;"
+              onkeydown="handleKey(event)"
+              oninput="autoGrow(this)"
+            ></textarea>
+            <button
+              class="send-btn"
+              id="sendBtn"
+              onclick="sendMessage()"
+              title="Send message"
+            >
+              <svg viewBox="0 0 24 24">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+              </svg>
+            </button>
+          </div>
+          <div class="input-disclaimer">
+            ERLHS Chatbot provides general info only. For official inquiries,
+            contact the school directly.
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /.page -->
+
+    <script>
+      // ── CONFIG ───────────────────────────────────
+      const BACKEND = "https://exequiel-chatbot-backend.vercel.app/api/chat";
+      const MAX_RETRIES = 2;
+      const RETRY_DELAY_MS = 1500;
+
+      // ── TEMPORARY CANNED RESPONSES ───────────────
+      // Remove this object once the real backend is live
+      const CANNED = {
+        programs: `**Programs Offered at ERLHS**\n\nExequiel R. Lina High School offers the following programs:\n\n**Junior High School (JHS)**\n• Grades 7 to 10 — Standard DepEd curriculum\n\n**Senior High School (SHS)**\n• Grades 11 and 12\n• **Academic Track:** STEM, ABM, HUMSS, GAS\n• **TVL Track:** Leads to TESDA National Certificate\n\n**ALS-SHS**\n• For out-of-school youth and adults who passed the A&E Test (JHS level)\n\nFor more details, contact ERLHS at (0917) 506-2282 or visit the school at Brgy. Poblacion Norte, Licab, Nueva Ecija.`,
+
+        enrollment: `**Enrollment Requirements at ERLHS**\n\n**Grade 7 (Incoming)**\n• Grade 6 Form 138 (Report Card)\n• PSA-issued Birth Certificate\n\n**Grade 11 (Senior High School)**\n• Grade 10 Form 138 (Report Card)\n• PSA-issued Birth Certificate\n• Certificate of Good Moral Character\n\n**ALS-SHS Enrollees**\n• A&E Test Results (JHS level passed)\n• PSA-issued Birth Certificate\n• AF2 Enrollment Form\n\n**Transferees**\n• Previous school records\n• PSA-issued Birth Certificate\n• Certificate of Good Moral Character\n\nEnrollment is usually held every **May to June**. For exact dates, call (0917) 506-2282.`,
+
+        tuition: `**Tuition & Fees at ERLHS**\n\nAs a **public national high school** under the Department of Education (DepEd), Exequiel R. Lina High School is **free of charge** for all enrolled students.\n\nThis covers:\n• Tuition — FREE\n• Miscellaneous fees — FREE (per DepEd policy)\n\n**Scholarships & Financial Assistance**\n• Students may apply for DepEd-aligned programs such as the **Expanded Students' Grants-in-Aid Program for Poverty Alleviation (ESGPPA)** for SHS\n• Other government scholarship programs may also be available\n\nFor scholarship inquiries, visit the school's Guidance Office or contact (0917) 506-2282.`,
+
+        location: `**ERLHS Location & Directions**\n\n📍 **Address:**\nBrgy. Poblacion Norte, Don Dalmacio Esguerra Avenue, Licab, Nueva Ecija\n\n**How to get there:**\n• From **Cabanatuan City** — take a jeepney or bus bound for Licab; travel time is approximately 30–45 minutes\n• From **San Jose City** — ride a jeepney or tricycle heading to Licab; approximately 20–30 minutes\n• The school is located along Don Dalmacio Esguerra Avenue in Poblacion Norte, the main barangay of Licab\n\nFor more specific directions, call the school at **(0917) 506-2282**.`,
+
+        contact: `**ERLHS Contact Information**\n\n📞 **Phone:** (0917) 506-2282\n📧 **DepEd Email:** 300845@deped.gov.ph\n📧 **School Email:** erlhs01231965@gmail.com\n🆔 **DepEd School ID:** 300845\n\n**School Administration:**\n• **Principal:** Dr. Glenn B. Abesamis\n• **Assistant Principal:** Maricel Duldulao\n\n📍 **Address:**\nBrgy. Poblacion Norte, Don Dalmacio Esguerra Avenue, Licab, Nueva Ecija\nRegion III – Central Luzon | Nueva Ecija Schools Division\n\nOffice hours are typically Monday to Friday, 7:00 AM – 5:00 PM during the school year.`,
+
+        schedule: `**ERLHS School Hours & Calendar**\n\n🕖 **Class Hours (typical)**\n• Monday to Friday\n• Morning: 7:00 AM – 12:00 NN\n• Afternoon: 1:00 PM – 5:00 PM\n\n**School Year Schedule**\n• **Enrollment:** May – June\n• **School Year Opens:** Late July\n• **1st Semester:** August – December\n• **2nd Semester:** January – May\n• **Graduation Ceremonies:** April – May\n\n**Office Hours**\n• Monday to Friday, 7:00 AM – 5:00 PM\n\nFor the latest class schedules or special announcements, please contact the school at (0917) 506-2282.`,
+      };
+
+      // ── ELEMENTS ─────────────────────────────────
+      const mainEl = document.getElementById("mainScroll");
+      const inputEl = document.getElementById("userinput");
+      const sendBtnEl = document.getElementById("sendBtn");
+      const fabEl = document.getElementById("scrollFab");
+      const bannerEl = document.getElementById("statusBanner");
+      const bannerTextEl = document.getElementById("statusText");
+      const welcomeSec = document.getElementById("welcomeSection");
+      const catSec = document.getElementById("catSection");
+      const chatSec = document.getElementById("chatSection");
+      let chatStarted = false;
+
+      // ── HELPERS ──────────────────────────────────
+      function formatTime() {
+        return new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      }
+      function autoGrow(el) {
+        el.style.height = "auto";
+        el.style.height = Math.min(el.scrollHeight, 100) + "px";
+      }
+      function handleKey(e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      }
+      function catSend(key) {
+        const prompts = {
+          programs: "What programs does ERLHS offer?",
+          enrollment: "What are the enrollment requirements at ERLHS?",
+          tuition:
+            "How much is the tuition and what scholarships are available?",
+          location: "Where is ERLHS located and how do I get there?",
+          contact: "What is the contact information of ERLHS?",
+          schedule: "What are the school hours and academic calendar of ERLHS?",
+        };
+        inputEl.value = prompts[key] || key;
+        sendMessage();
+      }
+      function scrollToBottom() {
+        mainEl.scrollTo({ top: mainEl.scrollHeight, behavior: "smooth" });
+      }
+      mainEl.addEventListener("scroll", () => {
+        const atBottom =
+          mainEl.scrollHeight - mainEl.scrollTop - mainEl.clientHeight < 60;
+        fabEl.classList.toggle("visible", !atBottom);
+      });
+
+      // ── START CHAT (fade welcome → show chat) ─────
+      function startChat() {
+        if (chatStarted) return;
+        chatStarted = true;
+        welcomeSec.style.transition = "opacity 0.3s, max-height 0.4s";
+        catSec.style.transition = "opacity 0.3s, max-height 0.4s";
+        welcomeSec.style.opacity = "0";
+        catSec.style.opacity = "0";
+        setTimeout(() => {
+          welcomeSec.style.display = "none";
+          catSec.style.display = "none";
+          chatSec.classList.add("active");
+        }, 320);
+      }
+
+      // ── BANNER ────────────────────────────────────
+      function showBanner(type, text) {
+        bannerEl.className = "status-banner show " + type;
+        bannerTextEl.textContent = text;
+      }
+      function hideBanner() {
+        bannerEl.className = "status-banner";
+      }
+
+      // ── APPEND MESSAGE ────────────────────────────
+      function appendMessage(role, content, options = {}) {
+        const row = document.createElement("div");
+        row.className = "msg-row " + role;
+
+        const av = document.createElement("div");
+        av.className = "msg-av";
+        if (role === "bot") {
+          av.innerHTML = `<img src="logo.png" alt="" onerror="this.style.display='none';this.parentElement.textContent='ER'">`;
+        } else {
+          av.textContent = "You";
+        }
+
+        const body = document.createElement("div");
+        body.className = "msg-body";
+
+        const bub = document.createElement("div");
+        bub.className = "bubble" + (options.isError ? " is-error" : "");
+
+        if (content === "__typing__") {
+          bub.innerHTML = `<div class="typing-dots"><span></span><span></span><span></span></div>`;
+          row.id = "typing-row";
+        } else if (options.isError) {
+          const msg = document.createElement("span");
+          msg.className = "err-text";
+          msg.textContent = content;
+          bub.appendChild(msg);
+          if (options.onRetry) {
+            const rb = document.createElement("button");
+            rb.className = "retry-btn";
+            rb.innerHTML = "&#8635; Try again";
+            rb.onclick = () => {
+              row.remove();
+              options.onRetry();
+            };
+            bub.appendChild(document.createElement("br"));
+            bub.appendChild(rb);
+          }
+        } else {
+          bub.innerHTML = content
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+            .replace(/\*(.*?)\*/g, "<em>$1</em>")
+            .replace(/\n/g, "<br>");
+        }
+
+        body.appendChild(bub);
+        if (content !== "__typing__") {
+          const ts = document.createElement("span");
+          ts.className = "msg-ts";
+          ts.textContent = formatTime();
+          body.appendChild(ts);
+        }
+        row.appendChild(av);
+        row.appendChild(body);
+        // append inside centered inner wrapper
+        let inner = chatSec.querySelector(".chat-inner-msgs");
+        if (!inner) {
+          inner = document.createElement("div");
+          inner.className = "chat-inner chat-inner-msgs";
+          chatSec.appendChild(inner);
+        }
+        inner.appendChild(row);
+        scrollToBottom();
+        return row;
+      }
+
+      // ── FETCH WITH RETRY ──────────────────────────
+      async function fetchWithRetry(message, attempt = 1) {
+        try {
+          if (attempt > 1) {
+            showBanner(
+              "reconnecting",
+              `Reconnecting\u2026 (attempt ${attempt} of ${MAX_RETRIES + 1})`,
+            );
+            await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+          }
+          const res = await fetch(BACKEND, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message }),
+          });
+          const data = await res.json();
+          if (!res.ok)
+            throw {
+              friendly:
+                data.error ||
+                "The assistant encountered an error. Please try again.",
+              noRetry: true,
+            };
+          hideBanner();
+          return (
+            data.reply ||
+            "Sorry, I couldn\u2019t get a response. Please contact ERLHS at (0917) 506-2282."
+          );
+        } catch (err) {
+          if (err.noRetry) throw err;
+          if (attempt <= MAX_RETRIES)
+            return fetchWithRetry(message, attempt + 1);
+          hideBanner();
+          throw {
+            friendly:
+              "Cannot reach the server. Please check your connection or contact ERLHS at (0917) 506-2282.",
+          };
+        }
+      }
+
+      // ── SEND MESSAGE ──────────────────────────────
+      async function sendMessage(overrideText) {
+        const text = (overrideText || inputEl.value).trim();
+        if (!text || sendBtnEl.disabled) return;
+
+        startChat();
+        hideBanner();
+        appendMessage("user", text);
+        inputEl.value = "";
+        inputEl.style.height = "auto";
+        sendBtnEl.disabled = true;
+
+        const typingRow = appendMessage("bot", "__typing__");
+
+        // Check canned responses first (temporary until backend is live)
+        const key = Object.keys(CANNED).find(
+          (k) =>
+            text.toLowerCase().includes(k) ||
+            (k === "programs" &&
+              (text.toLowerCase().includes("program") ||
+                text.toLowerCase().includes("strand") ||
+                text.toLowerCase().includes("track"))) ||
+            (k === "enrollment" && text.toLowerCase().includes("enroll")) ||
+            (k === "tuition" &&
+              (text.toLowerCase().includes("tuit") ||
+                text.toLowerCase().includes("fee") ||
+                text.toLowerCase().includes("scholar") ||
+                text.toLowerCase().includes("free"))) ||
+            (k === "location" &&
+              (text.toLowerCase().includes("locat") ||
+                text.toLowerCase().includes("where") ||
+                text.toLowerCase().includes("address") ||
+                text.toLowerCase().includes("direction"))) ||
+            (k === "contact" &&
+              (text.toLowerCase().includes("contact") ||
+                text.toLowerCase().includes("phone") ||
+                text.toLowerCase().includes("email") ||
+                text.toLowerCase().includes("principal"))) ||
+            (k === "schedule" &&
+              (text.toLowerCase().includes("hour") ||
+                text.toLowerCase().includes("schedul") ||
+                text.toLowerCase().includes("time") ||
+                text.toLowerCase().includes("calendar"))),
+        );
+
+        if (key) {
+          await new Promise((r) => setTimeout(r, 900)); // simulate thinking
+          typingRow.remove();
+          appendMessage("bot", CANNED[key]);
+          sendBtnEl.disabled = false;
+          inputEl.focus();
+          return;
+        }
+
+        // Otherwise hit real backend
+        try {
+          const reply = await fetchWithRetry(text);
+          typingRow.remove();
+          appendMessage("bot", reply);
+        } catch (err) {
+          typingRow.remove();
+          showBanner(
+            "offline",
+            "Connection lost \u2014 please check your network.",
+          );
+          appendMessage(
+            "bot",
+            err.friendly || "Something went wrong. Please try again.",
+            {
+              isError: true,
+              onRetry: () => sendMessage(text),
+            },
+          );
+        }
+        sendBtnEl.disabled = false;
+        inputEl.focus();
+      }
+    </script>
+  </body>
+</html>
