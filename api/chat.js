@@ -103,7 +103,7 @@ Phone: (0917) 506-2282 | Email: 300845@deped.gov.ph | Visit: Brgy. Poblacion Nor
           { role: "system", content: systemInstruction },
           { role: "user", content: message.trim() }
         ],
-        temperature: 0.4,
+        temperature: 0.8,
         max_tokens: 700
       })
     });
